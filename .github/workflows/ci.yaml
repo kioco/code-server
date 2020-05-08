@@ -3,12 +3,50 @@ name: ci
 on: [push, pull_request]
 
 jobs:
-  arm64-release:
-    name: linux-arm64-release
-    runs-on: [Linux, ARM64]
+  test:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - run: ./ci/steps/linux-release.sh
+      - run: sudo snap install shfmt
+      - run: ./ci/steps/test.sh
+
+  linux-amd64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: ./ci/container/exec.sh ./ci/steps/release.sh
+      - run: ./ci/container/exec.sh yarn pkg
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release-github
+          path: ./release-github/*
+      - uses: actions/upload-artifact@v2
+        with:
+          name: npm-package
+          path: ./release/*
+
+  linux-arm64:
+    runs-on: ubuntu-arm64-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: ./ci/container/exec.sh ./ci/steps/release.sh
+      - run: ./ci/container/exec.sh yarn pkg
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release-github
+          path: ./release-github/*
+      - uses: actions/upload-artifact@v2
+        with:
+          name: npm-package
+          path: ./release/*
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: brew unlink node@12
+      - run: brew install node
+      - run: ./ci/steps/release.sh
       - uses: actions/upload-artifact@v2
         with:
           name: release-github
